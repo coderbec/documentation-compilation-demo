@@ -1,0 +1,1542 @@
+## Group Messages
+
+### /v1/messages
+
+#### Send messages [POST]
+
+Submit one or more (up to 100 per request) SMS, MMS or text to voice messages for delivery.
+
+The most basic message has the following structure:
+```json
+{
+    "messages": [
+        {
+            "content": "My first message!",
+            "destination_number": "+61491570156"
+        }
+    ]
+}
+```
+
+More advanced delivery features can be specified by setting the following properties in a message:
+- ```callback_url``` A URL can be included with each message to which Webhooks will be pushed to
+  via a HTTP POST request. Webhooks will be sent if and when the status of the message changes as
+  it is processed (if the delivery report property of the request is set to ```true```) and when replies
+  are received. Specifying a callback URL is optional.
+- ```content``` The content of the message. This can be a Unicode string, up to 5,000 characters long.
+  Message content is required.
+- ```delivery_report``` Delivery reports can be requested with each message. If delivery reports are requested, a webhook
+  will be submitted to the ```callback_url``` property specified for the message (or to the webhooks)
+  specified for the account every time the status of the message changes as it is processed. The
+  current status of the message can also be retrieved via the Delivery Reports endpoint of the
+  Messages API. Delivery reports are optional and by default will not be requested.
+- ```destination_number``` The destination number the message should be delivered to. This should be specified in E.164
+  international format. For information on E.164, please refer to http://en.wikipedia.org/wiki/E.164.
+  A destination number is required.
+- ```format``` The format specifies which format the message will be sent as, ```SMS``` (text message), ```MMS``` (multimedia message)
+  or ```TTS``` (text to speech). With ```TTS``` format, we will call the destination number and read out the
+  message using a computer generated voice. Specifying a format is optional, by default ```SMS``` will be used.
+- ```source_number``` A source number may be specified for the message, this will be the number that
+  the message appears from on the handset. By default this feature is _not_ available and will be ignored
+  in the request. Please contact <support@messagemedia.com> for more information. Specifying a source
+  number is optional and a by default a source number will be assigned to the message.
+- ```media``` The media is used to specify the url of the media file that you are trying to send. Supported file formats include png, jpeg and gif. ```format``` parameter must be set to ```MMS``` for this to work.
+- ```subject``` The subject field is used to denote subject of the MMS message and has a maximum size of 64 characters long. Specifying a subject is optional.
+- ```source_number_type``` If a source number is specified, the type of source number may also be
+  specified. This is recommended when using a source address type that is not an internationally
+  formatted number, available options are ```INTERNATIONAL```, ```ALPHANUMERIC``` or ```SHORTCODE```. Specifying a
+  source number type is only valid when the ```source_number``` parameter is specified and is optional.
+  If a source number is specified and no source number type is specified, the source number type will be
+  inferred from the source number, however this may be inaccurate.
+- ```scheduled``` A message can be scheduled for delivery in the future by setting the scheduled property.
+  The scheduled property expects a date time specified in ISO 8601 format. The scheduled time must be
+  provided in UTC and is optional. If no scheduled property is set, the message will be delivered immediately.
+- ```message_expiry_timestamp``` A message expiry timestamp can be provided to specify the latest time
+  at which the message should be delivered. If the message cannot be delivered before the specified
+  message expiry timestamp elapses, the message will be discarded. Specifying a message expiry 
+  timestamp is optional.
+- ```metadata``` Metadata can be included with the message which will then be included with any delivery
+  reports or replies matched to the message. This can be used to create powerful two-way messaging
+  applications without having to store persistent data in the application. Up to 10 key / value metadata data
+  pairs can be specified in a message. Each key can be up to 100 characters long, and each value up to 
+  256 characters long. Specifying metadata for a message is optional.
+  
+The response body of a successful POST request to the messages endpoint will include a ```messages```
+property which contains a list of all messages submitted. The list of messages submitted will
+reflect the list of messages included in the request, but each message will also contain two new
+properties, ```message_id``` and ```status```. The returned message ID will be a 36 character UUID
+which can be used to check the status of the message via the Get Message Status endpoint. The status
+of the message which reflect the status of the message at submission time which will always be
+```queued```. See the Delivery Reports section of this documentation for more information on message
+statues.
+
+*Note: when sending multiple messages in a request, all messages must be valid for the request to be successful.
+If any messages in the request are invalid, no messages will be sent.*
+  
+### Link Preview
+
+  The link previews feature enables you to customise the content of your link previews.This will further enable differentiation between _page visits_ and _link previews_ when using the [Short Trackable Links Reporting API](https://developers.messagemedia.com/code/short-trackable-links-api-documentation/).
+  The short trackable links feature must be turned on to use link previews. Please contact support@messagemedia.com to have this feature turned on in your account.
+  
+- ```rich_link``` The ```rich_link``` field 
+  is an optional field and the feature must be turned on in your account. The ```rich_link``` field is a JSON object containing the following fields:
+    - ```image``` The image field is used to specify the url of the media file that you want to show in the link preview. Supported file formats include png, jpeg and gif.
+    - ```title``` The (optional) title that appears on your unfurled link. Maximum 160 characters.
+    - ```description``` An optional description, maximum 360 characters. 
+
+
+The ```rich_link``` section of the fully formed message will look something link this: 
+```json
+"rich_link": {
+          "image": "http://example.com/cat.jpg",
+          "title": "Something awesome",
+          "description": "optional description"
+      }
+```
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
+            {
+                "messages": [
+                    {
+                        "callback_url": "https://my.callback.url.com",
+                        "content": "My first message",
+                        "destination_number": "+61491570156",
+                        "delivery_report": true,
+                        "format": "SMS",
+                        "message_expiry_timestamp": "2016-11-03T11:49:02.807Z",
+                        "metadata": {
+                            "key1": "value1",
+                            "key2": "value2"
+                        },
+                        "scheduled": "2016-11-03T11:49:02.807Z",
+                        "source_number": "+61491570157",
+                        "source_number_type": "INTERNATIONAL"
+                    },
+                    {
+                        "callback_url": "https://my.callback.url.com",
+                        "content": "My second message",
+                        "destination_number": "+61491570158",
+                        "delivery_report": true,
+                        "format": "MMS",
+                        "subject": "This is an MMS message",
+                        "media": [ "https://images.pexels.com/photos/1018350/pexels-photo-1018350.jpeg?cs=srgb&dl=architecture-buildings-city-1018350.jpg" ],
+                        "message_expiry_timestamp": "2016-11-03T11:49:02.807Z",
+                        "metadata": {
+                            "key1": "value1",
+                            "key2": "value2"
+                        },
+                        "scheduled": "2016-11-03T11:49:02.807Z",
+                        "source_number": "+61491570159",
+                        "source_number_type": "INTERNATIONAL"
+                    }
+                ]
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "required": [
+                "messages"
+              ],
+              "properties": {
+                "messages": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "callback_url": {
+                        "type": "string",
+                        "format": "url",
+                        "description": "URL replies and delivery reports to this message will be pushed to",
+                        "example": "https://my.url.com"
+                      },
+                      "content": {
+                        "type": "string",
+                        "description": "Content of the message",
+                        "minLength": 1,
+                        "maxLength": 5000,
+                        "example": "Hello world!"
+                      },
+                      "destination_number": {
+                        "type": "string",
+                        "maxLength": 15,
+                        "minLength": 1,
+                        "description": "Destination number of the message",
+                        "example": "+61491570156"
+                      },
+                      "delivery_report": {
+                        "type": "boolean",
+                        "description": "Request a delivery report for this message",
+                        "default": false,
+                        "example": true
+                      },
+                      "format": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "SMS",
+                                "MMS",
+                                "TTS"
+                            ],  
+                        },
+                        "description": "Format of message, SMS, MMS or TTS (Text To Speech).",
+                        "example": "SMS"
+                      },
+                      "subject": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "description": "Subject of the MMS message",
+                        "example": "This is the subject line"
+                      },
+                      "media" : {
+                      "type": "array",
+                      "items": {
+                         "type": "string",
+                         "format": "url",
+                         "description": "Link to the media file",
+                         "example": "https://images.pexels.com/photos/1018350/pexels-photo-1018350.jpeg?cs=srgb&dl=architecture-buildings-city-1018350.jpg"
+                       }
+                      },
+                      "message_expiry_timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date time after which the message expires and will not be sent",
+                        "example": "2016-11-03T11:49:02.807Z"
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "description": "Metadata for the message specified as a set of key value pairs, each key can be up to 100 characters long and each value can be up to 256 characters long\n```\n{\n   \"myKey\": \"myValue\",\n   \"anotherKey\": \"anotherValue\"\n}\n```\n"
+                      },
+                      "scheduled": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Scheduled delivery date time of the message",
+                        "example": "2016-11-03T11:49:02.807Z"
+                      },
+                      "source_number": {
+                        "type": "string",
+                        "example": "+61491570156"
+                      },
+                      "source_number_type": {
+                        "type": "string",
+                        "enum": [
+                          "INTERNATIONAL",
+                          "ALPHANUMERIC",
+                          "SHORTCODE"
+                        ],
+                        "description": "Type of source address specified, this can be INTERNATIONAL, ALPHANUMERIC or SHORTCODE",
+                        "example": "INTERNATIONAL"
+                      }
+                    }
+                  },
+                  "maxItems": 100
+                }
+              }
+            }
+
++ Response 202 (application/json)
+
+    Messages were accepted for processing
+
+    + Body
+
+            {
+              "messages": [
+                {
+                  "message_id": "04fe9a97-a579-43c5-bb1a-58ed29bf0a6a",
+                  "callback_url": "https://my.url.com",
+                  "status": "delivered",
+                  "content": "My first message",
+                  "destination_number": "+61491570156",
+                  "delivery_report": true,
+                  "format": "SMS",
+                  "message_expiry_timestamp": "2016-11-03T11:49:02.807Z",
+                  "metadata": {
+                    "key1": "value1",
+                    "key2": "value2"
+                  },
+                  "scheduled": "2016-11-03T11:49:02.807Z",
+                  "source_number": "+61491570157",
+                  "source_number_type": "INTERNATIONAL"
+                }
+              ]
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "properties": {
+                "messages": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "callback_url": {
+                            "type": "string",
+                            "format": "url",
+                            "description": "URL replies and delivery reports to this message will be pushed to",
+                            "example": "https://my.url.com"
+                          },
+                          "content": {
+                            "type": "string",
+                            "description": "Content of the message",
+                            "minLength": 1,
+                            "maxLength": 5000,
+                            "example": "Hello world!"
+                          },
+                          "destination_number": {
+                            "type": "string",
+                            "maxLength": 15,
+                            "minLength": 1,
+                            "description": "Destination number of the message",
+                            "example": "+61491570156"
+                          },
+                          "delivery_report": {
+                            "type": "boolean",
+                            "description": "Request a delivery report for this message",
+                            "default": false,
+                            "example": true
+                          },
+                          "format": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "SMS",
+                                    "TTS"
+                                ],  
+                            },
+                            "description": "Format of message, SMS or TTS (Text To Speech).",
+                            "example": "SMS"
+                          },
+                          "message_expiry_timestamp": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Date time after which the message expires and will not be sent",
+                            "example": "2016-11-03T11:49:02.807Z"
+                          },
+                          "metadata": {
+                            "type": "object",
+                            "description": "Metadata for the message specified as a set of key value pairs, each key can be up to 100 characters long and each value can be up to 256 characters long\n```\n{\n   \"myKey\": \"myValue\",\n   \"anotherKey\": \"anotherValue\"\n}\n```\n"
+                          },
+                          "scheduled": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Scheduled delivery date time of the message",
+                            "example": "2016-11-03T11:49:02.807Z"
+                          },
+                          "source_number": {
+                            "type": "string",
+                            "example": "+61491570156"
+                          },
+                          "source_number_type": {
+                            "type": "string",
+                            "enum": [
+                              "INTERNATIONAL",
+                              "ALPHANUMERIC",
+                              "SHORTCODE"
+                            ],
+                            "description": "Type of source address specified, this can be INTERNATIONAL, ALPHANUMERIC or SHORTCODE",
+                            "example": "INTERNATIONAL"
+                          }
+                        }
+                      },
+                      {
+                        "properties": {
+                          "message_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Unique ID of this message"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "enroute",
+                              "submitted",
+                              "delivered",
+                              "expired",
+                              "rejected",
+                              "undeliverable",
+                              "queued",
+                              "processed",
+                              "cancelled",
+                              "scheduled",
+                              "failed"
+                            ],
+                            "description": "The status of the message",
+                            "example": "delivered"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "maxItems": 100
+                }
+              }
+            }
+
++ Response 400 (application/json)
+
+    Request was invalid
+
+    + Body
+
+            {
+              "message": "Something went wrong. Please try again later."
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Request failed to parse correctly. Please ensure input is valid and try again."
+                }
+              }
+            }
+
+### /v1/messages/{messageId}
+
+#### Get message status [GET]
+
+Retrieve the current status of a message using the message ID returned in the send messages end point. 
+
+Messages sent out longer than 45 days ago (scheduled or otherwise) may have expired and no longer be available via this endpoint. Please consult the reporting API documentation for information about these messages. 
+
+A successful request to the get message status endpoint will return a response body as follows:
+```json
+{
+    "format": "SMS",
+    "content": "My first message!",
+    "metadata": {
+        "key1": "value1",
+        "key2": "value2"
+    },
+    "message_id": "877c19ef-fa2e-4cec-827a-e1df9b5509f7",
+    "callback_url": "https://my.callback.url.com",
+    "delivery_report": true,
+    "destination_number": "+61401760575",
+    "scheduled": "2016-11-03T11:49:02.807Z",
+    "source_number": "+61491570157",
+    "source_number_type": "INTERNATIONAL",
+    "message_expiry_timestamp": "2016-11-03T11:49:02.807Z",
+    "status": "enroute"
+}
+```
+
+The status property of the response indicates the current status of the message. See the Delivery
+Reports section of this documentation for more information on message statues. 
+
+*Note: If an invalid or non existent message ID parameter is specified in the request, then
+a HTTP 404 Not Found response will be returned*
+
++ Parameters
+
+    + messageId (required)
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
++ Response 200 (application/json)
+
+    The submitted message including the status of the message
+
+    + Body
+
+            {
+              "format": "SMS",
+              "content": "My first message!",
+              "metadata": {
+                "key1": "value1",
+                "key2": "value2"
+              },
+              "message_id": "877c19ef-fa2e-4cec-827a-e1df9b5509f7",
+              "callback_url": "https://my.callback.url.com",
+              "delivery_report": true,
+              "destination_number": "+61401760575",
+              "scheduled": "2016-11-03T11:49:02.807Z",
+              "source_number": "+61491570157",
+              "source_number_type": "INTERNATIONAL"
+              "message_expiry_timestamp": "2016-11-03T11:49:02.807Z",
+              "status": "enroute"
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "allOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "callback_url": {
+                      "type": "string",
+                      "format": "url",
+                      "description": "URL replies and delivery reports to this message will be pushed to",
+                      "example": "https://my.url.com"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Content of the message",
+                      "minLength": 1,
+                      "maxLength": 5000,
+                      "example": "Hello world!"
+                    },
+                    "destination_number": {
+                      "type": "string",
+                      "maxLength": 15,
+                      "minLength": 1,
+                      "description": "Destination number of the message",
+                      "example": "+61491570156"
+                    },
+                    "delivery_report": {
+                      "type": "boolean",
+                      "description": "Request a delivery report for this message",
+                      "default": false,
+                      "example": true
+                    },
+                    "format": {
+                      "type": "string",
+                      "enum": [
+                        "SMS",
+                        "TTS"
+                      ],
+                      "description": "Format of message, SMS or TTS (Text To Speech).",
+                      "example": "SMS"
+                    },
+                    "message_expiry_timestamp": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Date time after which the message expires and will not be sent",
+                      "example": "2016-11-03T11:49:02.807Z"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "description": "Metadata for the message specified as a set of key value pairs, each key can be up to 100 characters long and each value can be up to 256 characters long\n```\n{\n   \"myKey\": \"myValue\",\n   \"anotherKey\": \"anotherValue\"\n}\n```\n"
+                    },
+                    "scheduled": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Scheduled delivery date time of the message",
+                      "example": "2016-11-03T11:49:02.807Z"
+                    },
+                    "source_number": {
+                      "type": "string",
+                      "example": "+61491570156"
+                    },
+                    "source_number_type": {
+                      "type": "string",
+                      "enum": [
+                        "INTERNATIONAL",
+                        "ALPHANUMERIC",
+                        "SHORTCODE"
+                      ],
+                      "description": "Type of source address specified, this can be INTERNATIONAL, ALPHANUMERIC or SHORTCODE",
+                      "example": "INTERNATIONAL"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "message_id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Unique ID of this message"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "enroute",
+                        "submitted",
+                        "delivered",
+                        "expired",
+                        "rejected",
+                        "undeliverable",
+                        "queued",
+                        "processed",
+                        "cancelled",
+                        "scheduled",
+                        "failed"
+                      ],
+                      "description": "The status of the message",
+                      "example": "delivered"
+                    }
+                  }
+                }
+              ]
+            }
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
++ Response 404 (application/json)
+
+    Message not found
+
+    + Body
+
+#### Cancel scheduled message [PUT]
+
+Cancel a scheduled message that has not yet been delivered.
+
+A scheduled message can be cancelled by updating the status of a message from ```scheduled```
+to ```cancelled```. This is done by submitting a PUT request to the messages endpoint using
+the message ID as a parameter (the same endpoint used above to retrieve the status of a message).
+The body of the request simply needs to contain a ```status``` property with the value set
+to ```cancelled```.
+
+```json
+{
+    "status": "cancelled"
+}
+```
+
+*Note: Only messages with a status of scheduled can be cancelled. If an invalid or non existent
+message ID parameter is specified in the request, then a HTTP 404 Not Found response will be 
+returned*
+
++ Parameters
+
+    + messageId (required)
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
+            {
+              "status": "cancelled"
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "required": [
+                "status"
+              ],
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "cancelled"
+                  ],
+                  "example": "cancelled",
+                  "description": "New status for the message"
+                }
+              }
+            }
+
++ Response 200 (application/json)
+
+    Message status updated successfully
+
+    + Body
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
+            {
+              "status": "cancelled"
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "required": [
+                "status"
+              ],
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "cancelled"
+                  ],
+                  "example": "cancelled",
+                  "description": "New status for the message"
+                }
+              }
+            }
+
++ Response 400 (application/json)
+
+    Request body is invalid, or the status of the message is not scheduled
+
+    + Body
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
+            {
+              "status": "cancelled"
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "required": [
+                "status"
+              ],
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "cancelled"
+                  ],
+                  "example": "cancelled",
+                  "description": "New status for the message"
+                }
+              }
+            }
+
++ Response 404 (application/json)
+
+    Message not found
+
+    + Body
+
+## Group Replies
+
+### /v1/replies
+
+#### Check replies [GET]
+
+Check for any replies that have been received.
+
+Replies are messages that have been sent from a handset in response to a message sent by an
+application or messages that have been sent from a handset to a inbound number associated with
+an account, known as a dedicated inbound number (contact <support@messagemedia.com> for more
+information on dedicated inbound numbers).
+
+Each request to the check replies endpoint will return any replies received that have not yet
+been confirmed using the confirm replies endpoint. A response from the check replies endpoint
+will have the following structure:
+```json
+{
+    "replies": [
+        {
+            "metadata": {
+                "key1": "value1",
+                "key2": "value2"
+            },
+            "message_id": "877c19ef-fa2e-4cec-827a-e1df9b5509f7",
+            "reply_id": "a175e797-2b54-468b-9850-41a3eab32f74",
+            "date_received": "2016-12-07T08:43:00.850Z",
+            "callback_url": "https://my.callback.url.com",
+            "destination_number": "+61491570156",
+            "source_number": "+61491570157",
+            "vendor_account_id": {
+                "vendor_id": "MessageMedia",
+                "account_id": "MyAccount"
+            },
+            "content": "My first reply!"
+        },
+        {
+            "metadata": {
+                "key1": "value1",
+                "key2": "value2"
+            },
+            "message_id": "8f2f5927-2e16-4f1c-bd43-47dbe2a77ae4",
+            "reply_id": "3d8d53d8-01d3-45dd-8cfa-4dfc81600f7f",
+            "date_received": "2016-12-07T08:43:00.850Z",
+            "callback_url": "https://my.callback.url.com",
+            "destination_number": "+61491570157",
+            "source_number": "+61491570158",
+            "vendor_account_id": {
+                "vendor_id": "MessageMedia",
+                "account_id": "MyAccount"
+            },
+            "content": "My second reply!"
+        }
+    ]
+}
+```
+
+Each reply will contain details about the reply message, as well as details of the message the reply was sent
+in response to, including any metadata specified. Every reply will have a reply ID to be used with the
+confirm replies endpoint.
+
+*Note: The source number and destination number properties in a reply are the inverse of those
+specified in the message the reply is in response to. The source number of the reply message is the
+same as the destination number of the original message, and the destination number of the reply
+message is the same as the source number of the original message. If a source number
+wasn't specified in the original message, then the destination number property will not be present
+in the reply message.*
+
+Subsequent requests to the check replies endpoint will return the same reply messages and a maximum
+of 100 replies will be returned in each request. Applications should use the confirm replies endpoint
+in the following pattern so that replies that have been processed are no longer returned in
+subsequent check replies requests.
+1. Call check replies endpoint
+2. Process each reply message
+3. Confirm all processed reply messages using the confirm replies endpoint
+
+*Note: It is recommended to use the Webhooks feature to receive reply messages rather than polling
+the check replies endpoint.*
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
++ Response 200 (application/json)
+
+    Unconfirmed replies
+
+    + Body
+
+            {
+              "replies": [
+                {
+                  "metadata": {
+                    "key1": "value1",
+                    "key2": "value2"
+                  },
+                  "message_id": "877c19ef-fa2e-4cec-827a-e1df9b5509f7",
+                  "reply_id": "a175e797-2b54-468b-9850-41a3eab32f74",
+                  "date_received": "2016-12-07T08:43:00.850Z",
+                  "callback_url": "https://my.callback.url.com",
+                  "destination_number": "+61491570156",
+                  "source_number": "+61491570157",
+                  "vendor_account_id": {
+                    "vendor_id": "MessageMedia",
+                    "account_id": "MyAccount"
+                  },
+                  "content": "My first reply!"
+                },
+                {
+                  "metadata": {
+                    "key1": "value1",
+                    "key2": "value2"
+                  },
+                  "message_id": "8f2f5927-2e16-4f1c-bd43-47dbe2a77ae4",
+                  "reply_id": "3d8d53d8-01d3-45dd-8cfa-4dfc81600f7f",
+                  "date_received": "2016-12-07T08:43:00.850Z",
+                  "callback_url": "https://my.callback.url.com",
+                  "destination_number": "+61491570157",
+                  "source_number": "+61491570158",
+                  "vendor_account_id": {
+                    "vendor_id": "MessageMedia",
+                    "account_id": "MyAccount"
+                  },
+                  "content": "My second reply!"
+                }
+              ]
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "properties": {
+                "replies": {
+                  "type": "array",
+                  "description": "The oldest 100 unconfirmed replies",
+                  "minItems": 0,
+                  "maxItems": 100,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "callback_url": {
+                        "type": "string",
+                        "format": "url",
+                        "description": "The URL specified as the callback URL in the original submit message request",
+                        "example": "https://my.url.com"
+                      },
+                      "content": {
+                        "type": "string",
+                        "description": "Content of the reply",
+                        "minLength": 1,
+                        "maxLength": 5000,
+                        "example": "Hello back"
+                      },
+                      "date_received": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date time when the reply was received",
+                        "example": "2016-11-03T11:49:02.807Z"
+                      },
+                      "destination_number": {
+                        "type": "string",
+                        "maxLength": 15,
+                        "minLength": 1,
+                        "description": "Address from which this reply was sent to",
+                        "example": "+61491570156"
+                      },
+                      "message_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique ID of the original message"
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "description": "Any metadata that was included in the original submit message request"
+                      },
+                      "reply_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique ID of this reply"
+                      },
+                      "source_number": {
+                        "type": "string",
+                        "maxLength": 15,
+                        "minLength": 1,
+                        "description": "Address from which this reply was received from",
+                        "example": "+61491570156"
+                      },
+                      "vendor_account_id": {
+                        "type": "object",
+                        "properties": {
+                          "vendor_id": {
+                            "type": "string",
+                            "example": "MessageMedia"
+                          },
+                          "account_id": {
+                            "type": "string",
+                            "description": "The account used to submit the original message.",
+                            "example": "MyAccount001"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+### /v1/replies/confirmed
+
+#### Confirm replies as received [POST]
+
+Mark a reply message as confirmed so it is no longer returned in check replies requests.
+
+The confirm replies endpoint is intended to be used in conjunction with the check replies endpoint
+to allow for robust processing of reply messages. Once one or more reply messages have been processed
+they can then be confirmed using the confirm replies endpoint so they are no longer returned in
+subsequent check replies requests.
+
+The confirm replies endpoint takes a list of reply IDs as follows:
+```json
+{
+    "reply_ids": [
+        "011dcead-6988-4ad6-a1c7-6b6c68ea628d",
+        "3487b3fa-6586-4979-a233-2d1b095c7718",
+        "ba28e94b-c83d-4759-98e7-ff9c7edb87a1"
+    ]
+}
+```
+
+Up to 100 replies can be confirmed in a single confirm replies request.
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
+            {
+                "reply_ids": [
+                    "011dcead-6988-4ad6-a1c7-6b6c68ea628d",
+                    "3487b3fa-6586-4979-a233-2d1b095c7718",
+                    "ba28e94b-c83d-4759-98e7-ff9c7edb87a1"
+                ]
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "required": [
+                "reply_ids"
+              ],
+              "properties": {
+                "reply_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "maxItems": 100
+                }
+              }
+            }
+
++ Response 202 (application/json)
+
+    Requested replies will be marked as confirmed
+
+    + Body
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
+    + Schema
+
+            {
+              "type": "object",
+              "required": [
+                "reply_ids"
+              ],
+              "properties": {
+                "reply_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "maxItems": 100
+                }
+              }
+            }
+
++ Response 400 (application/json)
+
+    Request was invalid
+
+    + Body
+
+## Group Delivery Reports
+Delivery Reports may carry an additional charge. For pricing, please contact your Account Manager or Support Team (<support@messagemedia.com>)
+
+### /v1/delivery_reports
+
+#### Check delivery reports [GET]
+
+Check for any delivery reports that have been received.
+
+Delivery reports are a notification of the change in status of a message as it is being processed.
+
+Each request to the check delivery reports endpoint will return any delivery reports received that
+have not yet been confirmed using the confirm delivery reports endpoint. A response from the check
+delivery reports endpoint will have the following structure:
+```json
+{
+    "delivery_reports": [
+        {
+            "callback_url": "https://my.callback.url.com",
+            "delivery_report_id": "01e1fa0a-6e27-4945-9cdb-18644b4de043",
+            "source_number": "+61491570157",
+            "date_received": "2017-05-20T06:30:37.642Z",
+            "status": "enroute",
+            "delay": 0,
+            "submitted_date": "2017-05-20T06:30:37.639Z",
+            "original_text": "My first message!",
+            "message_id": "d781dcab-d9d8-4fb2-9e03-872f07ae94ba",
+            "vendor_account_id": {
+                "vendor_id": "MessageMedia",
+                "account_id": "MyAccount"
+            },
+            "metadata": {
+                "key1": "value1",
+                "key2": "value2"
+            }
+        },
+        {
+            "callback_url": "https://my.callback.url.com",
+            "delivery_report_id": "0edf9022-7ccc-43e6-acab-480e93e98c1b",
+            "source_number": "+61491570158",
+            "date_received": "2017-05-21T01:46:42.579Z",
+            "status": "enroute",
+            "delay": 0,
+            "submitted_date": "2017-05-21T01:46:42.574Z",
+            "original_text": "My second message!",
+            "message_id": "fbb3b3f5-b702-4d8b-ab44-65b2ee39a281",
+            "vendor_account_id": {
+                "vendor_id": "MessageMedia",
+                "account_id": "MyAccount"
+            },
+            "metadata": {
+                "key1": "value1",
+                "key2": "value2"
+            }
+        }
+    ]
+}
+```
+
+Each delivery report will contain details about the message, including any metadata specified
+and the new status of the message (as each delivery report indicates a change in status of a
+message) and the timestamp at which the status changed. Every delivery report will have a 
+unique delivery report ID for use with the confirm delivery reports endpoint.
+
+*Note: The source number and destination number properties in a delivery report are the inverse of
+those specified in the message that the delivery report relates to. The source number of the
+delivery report is the destination number of the original message.*
+
+Subsequent requests to the check delivery reports endpoint will return the same delivery reports
+and a maximum of 100 delivery reports will be returned in each request. Applications should use the
+confirm delivery reports endpoint in the following pattern so that delivery reports that have been
+processed are no longer returned in subsequent check delivery reports requests.
+1. Call check delivery reports endpoint
+2. Process each delivery report
+3. Confirm all processed delivery reports using the confirm delivery reports endpoint
+
+*Note: It is recommended to use the Webhooks feature to receive reply messages rather than
+polling the check delivery reports endpoint.*
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
++ Response 200 (application/json)
+
+    Unconfirmed reports
+
+    + Body
+
+            {
+                "delivery_reports": [
+                    {
+                        "callback_url": "https://my.callback.url.com",
+                        "delivery_report_id": "01e1fa0a-6e27-4945-9cdb-18644b4de043",
+                        "source_number": "+61491570157",
+                        "date_received": "2017-05-20T06:30:37.642Z",
+                        "status": "enroute",
+                        "delay": 0,
+                        "submitted_date": "2017-05-20T06:30:37.639Z",
+                        "original_text": "My first message!",
+                        "message_id": "d781dcab-d9d8-4fb2-9e03-872f07ae94ba",
+                        "vendor_account_id": {
+                            "vendor_id": "MessageMedia",
+                            "account_id": "MyAccount"
+                        },
+                        "metadata": {
+                            "key1": "value1",
+                            "key2": "value2"
+                        }
+                    },
+                    {
+                        "callback_url": "https://my.callback.url.com",
+                        "delivery_report_id": "0edf9022-7ccc-43e6-acab-480e93e98c1b",
+                        "source_number": "+61491570158",
+                        "date_received": "2017-05-21T01:46:42.579Z",
+                        "status": "submitted",
+                        "delay": 0,
+                        "submitted_date": "2017-05-21T01:46:42.574Z",
+                        "original_text": "My second message!",
+                        "message_id": "fbb3b3f5-b702-4d8b-ab44-65b2ee39a281",
+                        "vendor_account_id": {
+                            "vendor_id": "MessageMedia",
+                            "account_id": "MyAccount"
+                        },
+                        "metadata": {
+                            "key1": "value1",
+                            "key2": "value2"
+                        }
+                    }
+                ]
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "properties": {
+                "delivery_reports": {
+                  "type": "array",
+                  "description": "The oldest 100 unconfirmed delivery reports",
+                  "minItems": 0,
+                  "maxItems": 100,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "callback_url": {
+                        "type": "string",
+                        "format": "url",
+                        "description": "The URL specified as the callback URL in the original submit message request",
+                        "example": "https://my.url.com"
+                      },
+                      "date_received": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "The date and time at which this delivery report was generated in UTC.",
+                        "example": "2016-11-03T11:49:02.807Z"
+                      },
+                      "delay": {
+                        "type": "integer",
+                        "description": "Deprecated, no longer in use",
+                        "example": 0
+                      },
+                      "delivery_report_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique ID for this delivery report"
+                      },
+                      "message_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique ID of the original message"
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "description": "Any metadata that was included in the original submit message request"
+                      },
+                      "original_text": {
+                        "type": "string",
+                        "description": "Text of the original message.",
+                        "example": "Hello back"
+                      },
+                      "source_number": {
+                        "type": "string",
+                        "maxLength": 15,
+                        "minLength": 1,
+                        "description": "Address from which this delivery report was received",
+                        "example": "+61491570156"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "enroute",
+                          "failed",
+                          "submitted",
+                          "delivered",
+                          "expired",
+                          "rejected",
+                          "undeliverable"
+                        ],
+                        "description": "The status of the message as per the delivery report",
+                        "example": "delivered"
+                      },
+                      "submitted_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "The date and time when the message status changed in UTC. For a delivered DR this may indicate the time at which the message was received on the handset.",
+                        "example": "2016-11-03T11:49:02.807Z"
+                      },
+                      "vendor_account_id": {
+                        "type": "object",
+                        "properties": {
+                          "vendor_id": {
+                            "type": "string",
+                            "example": "MessageMedia"
+                          },
+                          "account_id": {
+                            "type": "string",
+                            "description": "The account used to submit the original message.",
+                            "example": "MyAccount001"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+### /v1/delivery_reports/confirmed
+
+#### Confirm delivery reports as received [POST]
+
+Mark a delivery report as confirmed so it is no longer return in check delivery reports requests.
+
+The confirm delivery reports endpoint is intended to be used in conjunction with the check delivery
+reports endpoint to allow for robust processing of delivery reports. Once one or more delivery
+reports have been processed, they can then be confirmed using the confirm delivery reports endpoint so they
+are no longer returned in subsequent check delivery reports requests.
+
+The confirm delivery reports endpoint takes a list of delivery report IDs as follows:
+```json
+{
+    "delivery_report_ids": [
+        "011dcead-6988-4ad6-a1c7-6b6c68ea628d",
+        "3487b3fa-6586-4979-a233-2d1b095c7718",
+        "ba28e94b-c83d-4759-98e7-ff9c7edb87a1"
+    ]
+}
+```
+
+Up to 100 delivery reports can be confirmed in a single confirm delivery reports request.
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
+            {
+                "delivery_report_ids": [
+                    "011dcead-6988-4ad6-a1c7-6b6c68ea628d",
+                    "3487b3fa-6586-4979-a233-2d1b095c7718",
+                    "ba28e94b-c83d-4759-98e7-ff9c7edb87a1"
+                ]
+            }
+
+    + Schema
+
+            {
+              "type": "object",
+              "required": [
+                "delivery_report_ids"
+              ],
+              "properties": {
+                "delivery_report_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "maxItems": 100
+                }
+              }
+            }
+
++ Response 202 (application/json)
+
+    Requested delivery reports will be marked as confirmed
+
+    + Body
+
++ Request (application/json)
+
+    + Headers
+
+            Accept: application/json
+
+    + Body
+
+    + Schema
+
+            {
+              "type": "object",
+              "required": [
+                "delivery_report_ids"
+              ],
+              "properties": {
+                "delivery_report_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "maxItems": 100
+                }
+              }
+            }
+
++ Response 400 (application/json)
+
+    Request was invalid
+
+    + Body
+
+##Group Webhooks
+
+The MessageMedia REST API provides HTTP Webhooks for notifications related to messages sent via the REST API.
+### Notifications
+If a callback URL is specified in the submit message request, then changes to the message status, replies received in response to the message or delivery reports received for the message will be pushed via a HTTP POST request. 
+### Format
+All notifications are JSON encoded and the request expects to receive a response in the HTTP 200 range. If a valid response isn't received the request will be retried in an exponentially backing off fashion.
+### Delivery Reports
+For delivery reports or changes in the status of a message, the POST request to the specified URL will be as follows:
+_Note, multiple delivery report notifications will be recieved for a single message._
+```plain
+{
+   "callback_url":"http://mockbin.org/bin/ac52ebd4-eca1-4c86-bf38-4dce79633906",
+   "delivery_report_id":"693e87f2-a553-4281-9ffe-ddf04cbc4bf3",
+   "source_number":"+61491570156",
+   "date_received":"2016-11-03T11:49:02.807Z",
+   "status":"delivered",
+   "delay":0,
+   "submitted_date":"2016-11-03T11:49:01.551Z",
+   "original_text":"Hello world!",
+   "message_id":"389dc1a8-62a4-4110-ba61-af94806c006f",
+   "vendor_account_id":{
+      "vendor_id":"MessageMedia",
+      "account_id":"MyAccount"
+   },
+   "error_code":"220",
+   "metadata":{
+      "key":"value"
+   }
+}
+```
+The properties included in the notification are as follows:
+* **Callback URL**: The URL specified as the callback URL in the original submit message request.
+* **Delivery Report ID**: A unique ID for the delivery report that this notification represents.
+* **Source Number**: The destination address of the original message.
+* **Date Received**: The date and time at which this notification was generated in UTC.
+* **Status**: The status of the message as indicated by this delivery report. The status field can be one of the following values:
+   * `enroute`: Message has been received by the gateway and is being processed (or waiting to be processed).
+   * `submitted`: Message has been submitted to a provider/carrier for delivery.
+   * `delivered`: Message delivery has been confirmed by the provider, including to the handset (where possible).
+   * `expired`: The message has expired.
+   * `rejected`: The message will not be delivered - permanent failure. Reasons may include usage limit exceeded, insufficient credit, number blocked, or content filtered
+   * `failed`: The message has failed. Reasons may include no active routes to destination or undeliverable by downstream provider.
+* **Delay**: _Deprecated, no longer in use_
+* **Submitted Date**: Date time status of the message changed in UTC. For a delivered DR this may indicate the time at which the message was received on the handset.
+* **Original Text**: Text of the original message.
+* **Message ID**: ID of the original message.
+* **Vendor Account ID**: The account used to submit the original message. The vendor will always be `MessageMedia`
+* **Status Code**: A status code which provides additional information about the message status:
+   * `101`: Message being processed by the gateway.
+   * `102`: Message is being rerouted to a different provider after failing via the first provider.
+   * `151`: Message held for screening.
+   * `200`: Message submitted to downstream provider for delivery.
+   * `210`: Message accepted by downstream provider.
+   * `211`: Message is enroute for delivery by provider.
+   * `212`: Message submitted. Delivery pending.
+   * `213`: Message scheduled for delivery by downstream provider.
+   * `220`: Message delivered.
+   * `221`: Message delivered to the handset.
+   * `320`: Message validity period has expired (prior to submission).
+   * `401`: Message validity period has expired (before delivery).
+   * `301`: Usage threshold reached. Message discarded.
+   * `302`: Destination address blocked. Message discarded.
+   * `303`: Source address blocked. Message discarded.
+   * `304`: Message dropped. Contact support.
+   * `305`: Message discarded due to duplicate detection.
+   * `402`: Message rejected by downstream provider.
+   * `403`: Message skipped by downstream provider.
+   * `410`: Invalid source address.
+   * `411`: Invalid destination address.
+   * `412`: Destination address blocked.
+   * `413`: SMS service unavailable on destination.
+   * `414`: Destination unreachable.
+   * `330`: Gateway failure.
+   * `331`: Message discarded.
+   * `332`: No available route to destination.
+   * `333`: Source address unsupported for this destination.
+   * `400`: Message failed; undeliverable.
+   * `405`: Message cancelled or deleted by provider.
+* **Metadata**: Any metadata that was included in the original submit message request.
+### SMS Replies
+For SMS replies, the POST request to the specified URL will be as follows:
+```plain
+{
+   "callback_url":"http://mockbin.org/bin/ac52ebd4-eca1-4c86-bf38-4dce79633906",
+   "source_number":"+61491570156",
+   "destination_number":"+61491570157",
+   "message_id":"b7058638-7650-4bb3-bff3-3d0e1be767a1",
+   "date_received":"2016-11-03T12:08:33.818Z",
+   "metadata":{
+      "key":"value"
+   },
+   "reply_id":"c7651312-db72-4582-90b3-975578936dcc",
+   "vendor_account_id":{
+      "vendor_id":"MessageMedia",
+      "account_id":"MyAccount"
+   },
+   "content":"Hello back"
+}
+```
+The properties included in the Webhooks are as follows:
+* **Callback URL**: The URL specified as the callback URL in the original submit message request.
+* **Source Number**: The destination address of the original message.
+* **Destination Number**: The address to which the reply was sent to, the source address of the original message.
+* **Message ID**: ID of the original message.
+* **Date Received**: The date and time at which the reply was received by the MessageMedia gateway in UTC.
+* **Metadata**: Any metadata that was included in the original submit message request.
+* **Reply ID**: A unique ID for the reply that this notification represents.
+* **Vendor Account ID**: The account used to submit the original message. The vendor will always be `MessageMedia`
+* **Content**: The content of the reply.
+
+### MMS Replies
+When Inbound MMS is enabled, the POST request to the specified URL will be as follows and contains additional parameters:
+```plain
+{
+   "callback_url":"http://mockbin.org/bin/ac52ebd4-eca1-4c86-bf38-4dce79633906",
+   "source_number":"+61491570156",
+   "destination_number":"+61491570157",
+   "message_id":"b7058638-7650-4bb3-bff3-3d0e1be767a1",
+   "date_received":"2016-11-03T12:08:33.818Z",
+   "metadata":{
+      "key":"value"
+   },
+   "reply_id":"c7651312-db72-4582-90b3-975578936dcc",
+   "vendor_account_id":{
+      "vendor_id":"MessageMedia",
+      "account_id":"MyAccount"
+   },
+   "content":"Hello back",
+   "attachments": [
+      {
+            "content_type": "image/jpeg",
+            "content": "<base 64 encoded attachment>",
+            "original_name": "image000000.jpg"
+      },
+      {
+        "content_type": "image/gif",
+        "content": "<base 64 encoded attachment>",
+        "original_name": "gif0001.jpg"
+      }
+   ]
+}
+```
+The additional properties included in these Webhooks are as follows:
+* **Attachments**: A list containing all the attachments that were included in the reply. This field is present only if you have enabled Inbound MMS in your account and the reply contains attachments.
+* **Attachments - Content Type**: The MIME type associated with this attachment.
+* **Attachments - Content**: The attachment Base64 encoded.
+* **Attachments - Original Name**: The name of the attachment
+### Inbound MMS
+**Inbound MMS is required to be enabled on your account before you can process MMS replies via Webhooks.** Please speak to your account manager, or our sales team for pricing and setup information.
+### Customised Webhooks
+Custom Webhooks can be configured at an account level. The request method, URL, body and headers can all be customised. Please contact support for more information.
+
+## Group Features
+
+###  De-Duplication 
+De-Duplication helps you avoid having to undertake data cleansing before commencing send outs.  It automatically detects and withholds messages deemed to be duplicates through the use of a 24-hour window – if a message is sent to the same number with the same content within a 24hr period, the subsequent message(s) will be withheld and rejected. To enable this, you don't need to make any changes to your application, just an account configuration change by MessageMedia's support team.
+
+###  Social Sending 
+Social Sending permits messages to be sent only during sociable hours - i.e. 8am to 6pm (based on your accounts local time zone - not local time). Messages sent outside of these hours are scheduled to be released during the next social time period. This feature helps businesses avoid send-outs during a time that would be deemed unsuitable by the customer. To enable this, you don't need to make any changes to your application, just an account configuration change by MessageMedia's support team.
+
+###  Familiar Sender
+Familiar Sender ensures all communication sent to a customer are from the same phone number. This allows businesses to build trust and familiarity with their customers and not confuse them by changing outgoing numbers. To enable this, you don't need to make any changes to your application, just an account configuration change by MessageMedia's support team.
+
+### Character Converter
+Characters in a message may not always fall within the GSM-7 supported characterset, and when this occurs all outbound messages will be encoded using UCS-2 leading to the customer being double-charged for the SMS. Character Converter can help you avoid being double-charged for your SMS by converting all characters into the GSM-7 format ensuring you always get the maximum characters into an SMS. Bear in my mind, this will downgrade all your unicode characters so for instance, your emojis will be translated into a string of unknown characters (eg: �).  To enable this, you don't need to make any changes to your application, just an account configuration change by MessageMedia's support team.

@@ -1,0 +1,75 @@
+{
+  "name": "documentation-master-repo",
+  "version": "1.0.0",
+  "description": "package for compiling all the documentation into one",
+  "scripts": {
+    "test": "run-p validate",
+    "commit": "git-cz",
+    "lint": "npm run-p lint:json lint:markdown spellcheck",
+    "lint:json": "node ./tools/jsonlint.js",
+    "lint:markdown": "remark ./ -q -f",
+    "spellcheck": "mdspell \"docs/**/*.md\" \"src/**/*.apib\" -n -a -r --en-au",
+    "spellcheck:fix": "run-s spellcheck:fix:actual spellcheck:sort",
+    "spellcheck:fix:actual": "mdspell \"docs/**/*.md\" \"src/**/*.apib\" -n -a --en-au",
+    "spellcheck:sort": "node tools/sort-spelling.js",
+    "watch": "nodemon -w src -e json,apib -x \"aglio -i src/index.apib -o build/index.html\"",
+    "build": "npm run-s build:apib build:html open:api",
+    "build:apib": "mkdirp build && aglio -c -i src/index.apib -o build/index.apib",
+    "build:html": "mkdirp build && aglio -i src/index.apib -o build/index.html",
+    "publish": "apiary publish --api-name=\"${APIARY_API_NAME}\" --path=\"build/index.apib\"",
+    "prevalidate": "npm run build:apib",
+    "validate": "node tools/validate.js",
+    "open:api": "open-cli build/index.html",
+    "create": "node tools/create-endpoint.js",
+    "prepush": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@bitbucket.org/MessageMedia/documentation-master-repo.git"
+  },
+  "author": "Bec Martin",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/MessageMedia/documentation-master-repo#readme",
+  "dependencies": {
+    "aglio": "^2.3.0",
+    "chalk": "^2.4.2",
+    "dotenv": "^8.0.0",
+    "drafter.js": "^2.6.7",
+    "globby": "^10.0.1",
+    "husky": "^3.0.3",
+    "markdown-spellcheck": "^1.3.1",
+    "mkdirp": "^0.5.1",
+    "node-fetch": "^2.6.0",
+    "npm-run-all": "^4.1.5",
+    "remark-cli": "^7.0.0",
+    "remark-preset-lint-recommended": "^3.0.3",
+    "tv4": "^1.3.0"
+  },
+  "devDependencies": {
+    "api-blueprint-validator-module": "~1.2.2",
+    "markdown-styles": "^3.1.9",
+    "rimraf": "^3.0.0",
+    "yargs": "^6.6.0",
+    "commitizen": "^4.0.3",
+    "nodemon": "^1.19.1",
+    "open-cli": "^5.0.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./tools/commitizen"
+    }
+  },
+  "remarkConfig": {
+    "plugins": [
+      "remark-preset-lint-recommended",
+      [
+        "remark-lint-list-item-bullet-indent",
+        false
+      ],
+      [
+        "remark-lint-final-newline",
+        false
+      ]
+    ]
+  }
+}

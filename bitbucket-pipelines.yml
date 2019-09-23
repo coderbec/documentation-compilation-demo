@@ -1,0 +1,33 @@
+# This is a sample build configuration for JavaScript.
+# Check our guides at https://confluence.atlassian.com/x/14UWN for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: starefossen/ruby-node
+
+pipelines:
+  default:
+    - step:
+        script:
+            - echo "This script runs on all branches that don't have any specific pipeline assigned in 'branches'."
+  branches:
+      master:
+        - step:
+            script: # Modify the commands below to build your repository.
+               - npm install
+               - bundle install
+               - npm run build
+               - npm run validate
+               - npm run publish
+               - pipe: atlassian/slack-notify:0.3.2
+                 variables:
+                   WEBHOOK_URL: 'https://hooks.slack.com/services/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'
+                   MESSAGE: 'successfully published to apiary'
+                      # DEBUG: '<boolean>' # Optional.
+      staging:
+        - step:
+            #image: openjdk:8 # This step uses its own image
+            script:
+              - echo "Successfully pushed to staging. Please PR to master for anything that is public facing and to publish on apiary."
+
+          

@@ -1,0 +1,95 @@
+## Group Authentication
+
+All requests to the MessageMedia REST API must be authenticated, this can either be done using Basic Authentication or by signing with a HMAC signature.
+
+## Credentials
+
+To access the API, an API key and secret are required.
+[Sign up for an developer account here to get access](https://developers.messagemedia.com/register/): https://developers.messagemedia.com/register/.
+
+
+## Basic Authentication
+Every request requires an `Authorization` header in the following format:
+```plain
+Authorization: Basic Base64(api_key:api_secret)
+```
+Where the header consists of the Basic keyword followed by your Basic Authentication `api_key` and `api_secret` that you have been supplied by support, seperated with a colon (:) which is then Base64 encoded.
+
+### Example request with Basic Authentication
+```plain
+POST /v1/messages HTTP/1.1
+Host: api.messagemedia.com
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic dGhpc2lzYWtleTp0aGlzaXNhc2VjcmV0Zm9ybW1iYXNpY2F1dGhyZXN0YXBp
+{
+  "messages": [
+    {
+      "content": "Hello World",
+      "destination_number": "+61491570156",
+      "format": "SMS"
+    }
+  ]
+}
+```
+_Note: spaces are used as indentation in the body of the above request._
+
+## HMAC Authentication
+Every request requires an `Authorization` header in the following formats:
+
+For a request with a request body:
+```plain
+Authorization: hmac username="<API KEY>", algorithm="hmac-sha1", headers="Date Content-MD5 request-line", signature="<SIGNATURE>"
+```
+For a request _without_ a request body:
+```plain
+Authorization: hmac username="<API KEY>", algorithm="hmac-sha1", headers="Date request-line", signature="<SIGNATURE>"
+```
+### To create this header
+#### Step 1
+Add a `Date` header to the request using the current date time in [RFC7231 Section 7.1.1.2](http://tools.ietf.org/html/rfc7231#section-7.1.1.2) format
+#### Step 2
+If the request has a body, add a header called `Content-MD5` where the value of this header is an MD5 hash of the request body, otherwise this header is not required
+#### Step 3
+Create a signing string by concatenating the `Date` header, the
+`Content-MD5` header (if set) and the request line with line breaks:
+```plain
+Date: Sat, 30 Jul 2016 05:13:23 GMT\nContent-MD5:10fd4feab20d38432480c07301e49616\nPOST /v1/messages HTTP/1.1
+```
+or 
+```plain
+Date: Sat, 30 Jul 2016 05:13:23 GMT\nGET /v1/messages/404b941b-2a29-469f-b114-9ea3e16bbe18 HTTP/1.1
+```
+#### Step 4
+Create a SHA1 HMAC hash using the signing string and the secret key (both converted to bytes using UTF-8) ```HMAC-SHA1(signing string, secret)```
+#### Step 5
+Base64 encode the HMAC hash and include it as the signature in the ```Authorization``` header
+### Example request with body
+```plain
+POST /v1/messages HTTP/1.1
+Host: api.messagemedia.com
+Accept: application/json
+Content-Type: application/json
+Date: Sat, 30 Jul 2016 05:18:52 GMT
+Authorization: hmac username="uCXUdoogNfCsehEClbO2", algorithm="hmac-sha1", headers="Date Content-MD5 request-line", signature="Ia4G5lkhH/3NDYpix+8ZHUnp6bA="
+Content-MD5: 5407644fa83bec240dede971307e0cad
+Content-Length: 133
+{
+  "messages": [
+    {
+      "content": "Hello World",
+      "destination_number": "+61491570156",
+      "format": "SMS"
+    }
+  ]
+}
+```
+_Note: spaces are used as indentation in the body of the above request._
+### Example request without body
+```plain
+GET /v1/messages/404b941b-2a29-469f-b114-9ea3e16bbe18 HTTP/1.1
+Host: api.messagemedia.com
+Accept: application/json
+Date: Sat, 30 Jul 2016 05:18:52 GMT
+Authorization: hmac username="uCXUdoogNfCsehEClbO2", algorithm="hmac-sha1", headers="Date request-line", signature="NTUwMjUwNTVmZGYzZTIxODMyYjc1ZmM3M2EwZWQ1NzA3NzA4ZTZjNw=="
+```
