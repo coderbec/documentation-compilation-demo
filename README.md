@@ -1,84 +1,60 @@
-# Project Title
+# Compiling Documentation Files Demo
 
-
+Co-owning documentation and complexity around responsibility for that documentation can make it hard to present a single unified set of documentation. Documentation is often a collaboration between the api/tech teams, the product team and the developer relations team. Additionally, internal teams will often have their own versions of api specification documents that diverge from the specifications used for externally facing documents. This further complicates management of the documentation when changes are deployed and can be a huge challenge for documentation owners and dev relations teams. Starting with API Blueprint files, this application demonsrates the use of renderers to compile multiple blueprints into a single unified document, for display and public dissemination. 
 
 ## Features
 
+bitbucket pipeline file
+
 ## To-dos
+
+Please subscribe to the repo to be notified when the following features get pushed: 
+* buildkite pipeline file
+* Swagger inclusion and conversion
+* tests
+* automatic versioning
+* codegen
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+These instructions will get you a copy of the project up and running on your local machine.
+
+1. Clone the repo
+2. run `npm install
+3. run `bundle install
+4. 
+
+Add the sources for your components to the src folder and modify the index.api to include your submodules
+5. npm run build
+6. npm run validate
+7. npm run publish
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
-
-```
-Give examples
-```
-
-### Installing
-
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
+You will need ruby and node installed one whatever machine is doing the build. The example buildkite file includes reference to a docker file that has ruby and node installed. 
 
 ## Deployment
 
-Add additional notes about how to deploy this on a live system
+bitbucket-pipelines is an example bitbucket pipeline that just publishes to apiary. This can be modified to use any of the included scripts in package.json for added functionality. 
 
 ## Built With
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+* [node.js](https://nodejs.org/) - The web framework used
+* [npm](https://www.npmjs.com/) - Dependency Management
+* [aglio](https://github.com/danielgtaylor/aglio) - API Blueprint Renderer
+* [apiaryio](https://rubygems.org/gems/apiaryio/versions/0.3.3) - GEm from Apiary to publish and validate
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+TBD
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+TBD
 
 ## Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+* **Bec Martin** - *Initial work* - [PurpleBooth](https://github.com/coderbec)
 
 ## License
 
@@ -86,6 +62,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+* https://github.com/danielgtaylor/ - Aglio
+* https://github.com/raymondburgess - Raymond Burgess from MessageMedia who developed the more advanced project this was inspired by internally?
