@@ -22,12 +22,10 @@ These instructions will get you a copy of the project up and running on your loc
 1. Clone the repo
 2. run `npm install
 3. run `bundle install
-4. 
-
-Add the sources for your components to the src folder and modify the index.api to include your submodules
-5. npm run build
-6. npm run validate
-7. npm run publish
+4. Add the sources for your components to the src folder and modify the index.api to include your submodules
+5. npm `run build
+6. npm `run validate
+7. npm `run publish
 
 ### Prerequisites
 
