@@ -52,7 +52,7 @@ TBD
 
 ## Authors
 
-* **Bec Martin** - *Initial work* - [PurpleBooth](https://github.com/coderbec)
+* **Bec Martin** - *Initial work* - [Github](https://github.com/coderbec)
 
 ## License
 
